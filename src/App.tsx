@@ -47,7 +47,7 @@ export default function App() {
                   </span>
                   <div className="h-[1px] w-12 bg-[#121212]"></div>
                   <span className="text-[11px] font-serif italic text-[#121212]/70">
-                    人类知觉的九维拓扑
+                    人类知觉的十维拓扑
                   </span>
                 </div>
 
@@ -57,7 +57,7 @@ export default function App() {
                 </h1>
 
                 <p className="text-sm sm:text-base max-w-2xl leading-relaxed font-serif font-light text-[#121212]/80">
-                  空间从来不仅是笛卡尔式的冷峻容器。在现象学、社会学与精神分析的凝视下，它是记忆庇护的角落、具身肉身的视界、权力规训的网络、欲望滑移的单侧曲面、抑或虚室生白的呼吸大用。
+                  空间从来不仅是笛卡尔式的冷峻容器。在现象学、社会学与日常实践的凝视下，它是记忆庇护的角落、具身肉身的视界、权力规训的网络、漫步者游击书写的活化空间、抑或虚室生白的呼吸大用。
                 </p>
               </div>
             </div>
@@ -98,6 +98,34 @@ export default function App() {
         {/* Tab 2: Catalog of Thinkers Grid */}
         {currentTab === 'catalog' && (
           <div className="space-y-6">
+            {/* Active Paradigm Banner with Tagline */}
+            {selectedParadigm !== 'all' && (
+              <div className="border border-[#121212] bg-[#f7f5ee] p-5">
+                {(() => {
+                  const currentP = PARADIGMS.find(p => p.id === selectedParadigm);
+                  if (!currentP) return null;
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-mono uppercase tracking-[0.2em] font-bold text-[#121212] px-2 py-0.5 border border-[#121212] bg-[#fdfcf8]">
+                          {currentP.name}
+                        </span>
+                        <span className="text-xs font-serif italic text-[#121212]/70 font-light">
+                          {currentP.nameEn}
+                        </span>
+                      </div>
+                      <p className="text-sm font-serif font-medium text-[#121212] leading-relaxed">
+                        “{currentP.tagline}”
+                      </p>
+                      <p className="text-xs font-serif text-[#121212]/75 leading-relaxed pt-1 border-t border-[#121212]/20">
+                        {currentP.desc}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             <div className="flex items-center justify-between pb-3 border-b border-[#121212]">
               <span className="text-xs font-mono uppercase tracking-widest text-[#121212]/70">
                 ARCHIVE INDEX — 共呈现 {filteredThinkers.length} 位空间思想家

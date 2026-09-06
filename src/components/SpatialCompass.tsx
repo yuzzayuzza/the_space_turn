@@ -31,7 +31,7 @@ export const SpatialCompass: React.FC<SpatialCompassProps> = ({
           </h2>
         </div>
         <p className="text-xs text-[#121212]/70 font-serif max-w-md leading-relaxed">
-          将九位思想家投射于“主观感知 ↔ 客观几何”与“本体栖居 ↔ 社会生产”的张力象限之中。轻触节点可快速切换核心思想与动态诠释。
+          将十三位空间思想大师投射于“主观感知 ↔ 客观几何”与“本体栖居 ↔ 社会生产”的张力象限之中。轻触节点可快速切换核心思想与动态诠释。
         </p>
       </div>
 

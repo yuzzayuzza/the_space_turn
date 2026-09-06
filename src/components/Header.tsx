@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <h1 className="text-sm font-serif font-light tracking-wide text-[#121212] hidden sm:block">
-              空间谱系：人对空间的九重理解 <span className="italic opacity-60 text-xs font-normal">/ Dimensions of Space</span>
+              空间谱系：人对空间的多重理解 <span className="italic opacity-60 text-xs font-normal">/ Dimensions of Space</span>
             </h1>
           </div>
         </div>
