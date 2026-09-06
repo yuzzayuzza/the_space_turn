@@ -1,0 +1,8 @@
+{
+  "name": "空间谱系：人对空间的理解",
+  "description": "探索现象学、社会学、精神分析、建筑学与东方哲学等流派对空间的深度洞察与交互动态艺术诠释。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

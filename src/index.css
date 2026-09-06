@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --font-serif: 'Noto Serif SC', serif;
+  --font-display: 'Cinzel', 'Noto Serif SC', serif;
+  --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --bg-editorial: #fdfcf8;
+  --ink-black: #121212;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #fdfcf8;
+  color: #121212;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #121212;
+  color: #fdfcf8;
+}
+
+.font-serif-sc {
+  font-family: 'Noto Serif SC', serif;
+}
+
+.font-display {
+  font-family: 'Cinzel', 'Noto Serif SC', serif;
+}
+
+.font-mono-code {
+  font-family: 'Space Grotesk', monospace;
+}
+
+/* Custom editorial hair-line scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #f5f3ec;
+}
+::-webkit-scrollbar-thumb {
+  background: #bbb7a9;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #121212;
+}
+
