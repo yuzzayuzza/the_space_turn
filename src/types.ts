@@ -1,12 +1,9 @@
 export type ParadigmId = 
   | 'phenomenology'
-  | 'humanistic_geography'
-  | 'environmental_cognition'
   | 'sociology'
-  | 'network_flows'
-  | 'deconstruction'
-  | 'taoist_void'
-  | 'psychoanalysis';
+  | 'psychoanalysis'
+  | 'eastern_architecture'
+  | 'physics_relativity';
 
 export interface SpatialCoordinates {
   // -100 (pure subjective/internal/dream) to +100 (pure objective/external/grid)

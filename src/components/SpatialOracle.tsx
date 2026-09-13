@@ -37,7 +37,7 @@ export const SpatialOracle: React.FC<SpatialOracleProps> = ({ onSelectThinker })
     if (!p) return;
 
     setIsGenerating(true);
-    setGenerationStep('正在连线空间哲学九大思想家谱系...');
+    setGenerationStep('正在连线空间哲学十大思想家谱系...');
     audioAtmosphere.playChime(420);
 
     try {

@@ -66,7 +66,7 @@ export default function App() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-xs font-mono uppercase tracking-widest pb-2 border-b border-[#121212]/30">
                   <span className="text-[#121212]/60">CURATION</span>
-                  <span className="font-bold text-[#121212]">09 THINKERS</span>
+                  <span className="font-bold text-[#121212]">10 THINKERS</span>
                 </div>
                 <div className="flex justify-between items-center text-xs font-mono uppercase tracking-widest pb-2 border-b border-[#121212]/30">
                   <span className="text-[#121212]/60">PARADIGMS</span>
@@ -98,34 +98,6 @@ export default function App() {
         {/* Tab 2: Catalog of Thinkers Grid */}
         {currentTab === 'catalog' && (
           <div className="space-y-6">
-            {/* Active Paradigm Banner with Tagline */}
-            {selectedParadigm !== 'all' && (
-              <div className="border border-[#121212] bg-[#f7f5ee] p-5">
-                {(() => {
-                  const currentP = PARADIGMS.find(p => p.id === selectedParadigm);
-                  if (!currentP) return null;
-                  return (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono uppercase tracking-[0.2em] font-bold text-[#121212] px-2 py-0.5 border border-[#121212] bg-[#fdfcf8]">
-                          {currentP.name}
-                        </span>
-                        <span className="text-xs font-serif italic text-[#121212]/70 font-light">
-                          {currentP.nameEn}
-                        </span>
-                      </div>
-                      <p className="text-sm font-serif font-medium text-[#121212] leading-relaxed">
-                        “{currentP.tagline}”
-                      </p>
-                      <p className="text-xs font-serif text-[#121212]/75 leading-relaxed pt-1 border-t border-[#121212]/20">
-                        {currentP.desc}
-                      </p>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
             <div className="flex items-center justify-between pb-3 border-b border-[#121212]">
               <span className="text-xs font-mono uppercase tracking-widest text-[#121212]/70">
                 ARCHIVE INDEX — 共呈现 {filteredThinkers.length} 位空间思想家
@@ -182,7 +154,7 @@ export default function App() {
           </div>
 
           <div className="text-xs font-mono uppercase tracking-widest text-[#121212]/80">
-            VOL. XXIV — NO. 12 · 空间谱系
+            VOL. XXIV — NO. 12 · 人对空间的十种理解
           </div>
         </div>
       </footer>

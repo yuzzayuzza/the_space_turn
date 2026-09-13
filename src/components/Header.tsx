@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <h1 className="text-sm font-serif font-light tracking-wide text-[#121212] hidden sm:block">
-              空间谱系：人对空间的多重理解 <span className="italic opacity-60 text-xs font-normal">/ Dimensions of Space</span>
+              人对空间的十种理解 <span className="italic opacity-60 text-xs font-normal">/ Dimensions of Space</span>
             </h1>
           </div>
         </div>
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>九大谱系</span>
+            <span>十大谱系</span>
           </button>
 
           <button

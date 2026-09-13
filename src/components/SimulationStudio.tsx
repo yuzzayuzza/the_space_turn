@@ -11,9 +11,6 @@ import { LaoziVoidSimulation } from './simulations/LaoziVoidSimulation';
 import { HarveyCompressionSimulation } from './simulations/HarveyCompressionSimulation';
 import { TschumiTranscriptsSimulation } from './simulations/TschumiTranscriptsSimulation';
 import { CerteauWalkingSimulation } from './simulations/CerteauWalkingSimulation';
-import { TuanTopophiliaSimulation } from './simulations/TuanTopophiliaSimulation';
-import { LynchCognitiveSimulation } from './simulations/LynchCognitiveSimulation';
-import { CastellsFlowsSimulation } from './simulations/CastellsFlowsSimulation';
 import { BookOpen, Sparkles, Compass, Lightbulb, ArrowLeft, ArrowRight } from 'lucide-react';
 import { audioAtmosphere } from '../utils/audioAtmosphere';
 
@@ -54,12 +51,6 @@ export const SimulationStudio: React.FC<SimulationStudioProps> = ({
         return <HarveyCompressionSimulation />;
       case 'tschumi':
         return <TschumiTranscriptsSimulation />;
-      case 'tuan':
-        return <TuanTopophiliaSimulation />;
-      case 'lynch':
-        return <LynchCognitiveSimulation />;
-      case 'castells':
-        return <CastellsFlowsSimulation />;
       default:
         return <BachelardNestSimulation />;
     }
