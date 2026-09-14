@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Eye, ShieldAlert, RotateCcw, Sliders, SplitSquareVertical, Compass, Sparkles } from 'lucide-react';
+import { Eye, ShieldAlert, RotateCcw, Sliders, SplitSquareVertical, Compass, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { audioAtmosphere } from '../../utils/audioAtmosphere';
 
 interface CellSubject {
@@ -23,6 +23,7 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
   const [panopticIntensity, setPanopticIntensity] = useState(80);
   const [cursorPos, setCursorPos] = useState({ x: 0.35, y: 0.5 });
   const [observedCount, setObservedCount] = useState(0);
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,8 +61,9 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
       const w = containerRef.current?.clientWidth || 800;
       const h = containerRef.current?.clientHeight || 500;
       ctx.clearRect(0, 0, w, h);
+      const isMobile = w < 640;
       const cx = w * 0.5;
-      const cy = h * 0.5;
+      const cy = h * (isMobile ? 0.52 : 0.51);
 
       if (mode === 'panopticon') {
         if (autoRotate) {
@@ -69,9 +71,9 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
           if (currentBeam > Math.PI * 2) currentBeam -= Math.PI * 2;
         }
 
-        // Slightly scaled down panopticon ring to prevent overlapping with top dossier or bottom epigraph card
-        const ringRadius = Math.min(w * 0.35, h * 0.30);
-        const towerRadius = 36;
+        // Scaled panopticon ring to fit safely within canvas borders on mobile
+        const ringRadius = Math.min(w * (isMobile ? 0.27 : 0.33), h * (isMobile ? 0.22 : 0.26));
+        const towerRadius = isMobile ? 28 : 34;
 
         // 1. Subtle Architectural Blueprint Grid Background
         ctx.strokeStyle = 'rgba(235, 230, 218, 0.04)';
@@ -269,21 +271,24 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Labels
-        ctx.font = '12px "Noto Serif SC", serif';
+        // Labels (safely positioned and sized)
+        const labelY1 = isMobile ? 56 : 68;
+        const labelY2 = labelY1 + (isMobile ? 14 : 16);
+
+        ctx.font = isMobile ? '10px "Noto Serif SC", serif' : '12px "Noto Serif SC", serif';
         ctx.fillStyle = '#eae5d8';
         ctx.textAlign = 'center';
-        ctx.fillText('日常规训空间 (Normative Reality)', mirrorX * 0.5, 34);
-        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.fillText(isMobile ? '日常规训空间' : '日常规训空间 (Normative Reality)', mirrorX * 0.5, labelY1);
+        ctx.font = isMobile ? '7.5px "JetBrains Mono", monospace' : '10px "JetBrains Mono", monospace';
         ctx.fillStyle = '#9e978c';
-        ctx.fillText('LOCATED SPACE · WHERE I PHYSICALLY AM', mirrorX * 0.5, 50);
+        ctx.fillText(isMobile ? 'LOCATED SPACE' : 'LOCATED SPACE · WHERE I PHYSICALLY AM', mirrorX * 0.5, labelY2);
 
-        ctx.font = '12px "Noto Serif SC", serif';
+        ctx.font = isMobile ? '10px "Noto Serif SC", serif' : '12px "Noto Serif SC", serif';
         ctx.fillStyle = '#c8a051';
-        ctx.fillText('异托邦：镜中反空间 (Heterotopic Mirror)', mirrorX * 1.5, 34);
-        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.fillText(isMobile ? '异托邦：镜中反空间' : '异托邦：镜中反空间 (Heterotopic Mirror)', mirrorX * 1.5, labelY1);
+        ctx.font = isMobile ? '7.5px "JetBrains Mono", monospace' : '10px "JetBrains Mono", monospace';
         ctx.fillStyle = '#d4b472';
-        ctx.fillText('AN ABSENT SPACE · WHERE I AM SEEN', mirrorX * 1.5, 50);
+        ctx.fillText(isMobile ? 'ABSENT MIRROR SPACE' : 'AN ABSENT SPACE · WHERE I AM SEEN', mirrorX * 1.5, labelY2);
 
         // Real subject position on left
         const rx = cursorPos.x * w;
@@ -348,51 +353,59 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
     };
   }, [mode, autoRotate, rotationSpeed, beamWidth, panopticIntensity, cursorPos]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const updatePointer = (clientX: number, clientY: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setCursorPos({
-      x: (e.clientX - rect.left) / rect.width,
-      y: (e.clientY - rect.top) / rect.height,
+      x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+      y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
     });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    updatePointer(e.clientX, e.clientY);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    updatePointer(e.clientX, e.clientY);
   };
 
   return (
     <div className="flex flex-col h-full bg-[#161514] text-[#eae5d8] select-none relative overflow-hidden">
-      {/* Top Editorial Archival Bar - Harmonious with Main App Gallery */}
-      <div className="px-6 py-3.5 bg-[#1d1c1a] border-b border-[#35332f] flex flex-wrap items-center justify-between gap-3 backdrop-blur-md text-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#c8a051] animate-pulse" />
-          <span className="font-serif font-medium tracking-wide text-[#eae5d8]">
+      {/* Top Editorial Archival Bar */}
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3.5 bg-[#1d1c1a] border-b border-[#35332f] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 backdrop-blur-md text-xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-2 h-2 rounded-full bg-[#c8a051] animate-pulse shrink-0" />
+          <span className="font-serif font-medium tracking-wide text-[#eae5d8] truncate text-xs">
             米歇尔·福柯：全景敞视机制与异托邦
           </span>
-          <span className="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#4a4742] text-[#c8a051] bg-[#262422]">
+          <span className="hidden sm:inline-block font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#4a4742] text-[#c8a051] bg-[#262422] shrink-0">
             DISCIPLINE & TOPOLOGY
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Mode Switcher in Refined Editorial Style */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
+          {/* Mode Switcher */}
           <div className="bg-[#242220] p-0.5 border border-[#3c3a35] flex items-center">
             <button
               onClick={() => {
                 setMode('panopticon');
                 audioAtmosphere.playChime(350);
               }}
-              className={`px-3 py-1 font-serif text-xs transition-colors cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-0.5 sm:py-1 font-serif text-[11px] sm:text-xs transition-colors cursor-pointer ${
                 mode === 'panopticon'
                   ? 'bg-[#eae7dd] text-[#161514] font-medium'
                   : 'text-[#9e9a91] hover:text-[#eae7dd]'
               }`}
             >
-              全景敞视圆环
+              全景敞视
             </button>
             <button
               onClick={() => {
                 setMode('heterotopia');
                 audioAtmosphere.playChime(460);
               }}
-              className={`px-3 py-1 font-serif text-xs transition-colors cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-0.5 sm:py-1 font-serif text-[11px] sm:text-xs transition-colors cursor-pointer ${
                 mode === 'heterotopia'
                   ? 'bg-[#eae7dd] text-[#161514] font-medium'
                   : 'text-[#9e9a91] hover:text-[#eae7dd]'
@@ -403,9 +416,9 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
           </div>
 
           {mode === 'panopticon' && (
-            <div className="flex items-center gap-4 text-[#a8a398]">
-              <div className="flex items-center gap-2">
-                <span>光束扇角:</span>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[#a8a398]">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[11px] sm:text-xs">扇角:</span>
                 <input
                   type="range"
                   min="0.25"
@@ -413,18 +426,18 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
                   step="0.05"
                   value={beamWidth}
                   onChange={e => setBeamWidth(Number(e.target.value))}
-                  className="w-16 accent-[#c8a051] cursor-pointer"
+                  className="w-14 sm:w-16 accent-[#c8a051] cursor-pointer"
                 />
               </div>
 
-              <label className="flex items-center gap-1.5 cursor-pointer text-[#d4cfc3]">
+              <label className="flex items-center gap-1 cursor-pointer text-[#d4cfc3] text-[11px] sm:text-xs">
                 <input
                   type="checkbox"
                   checked={autoRotate}
                   onChange={e => setAutoRotate(e.target.checked)}
                   className="accent-[#c8a051]"
                 />
-                <span className="font-serif">自动环巡</span>
+                <span className="font-serif">巡视</span>
               </label>
 
               <button
@@ -432,7 +445,7 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
                   setBeamAngle(0);
                   audioAtmosphere.playChime(260);
                 }}
-                className="flex items-center gap-1 text-[#c8a051] hover:text-[#eae5d8] transition-colors cursor-pointer border border-[#3c3a35] px-2 py-0.5 bg-[#242220]"
+                className="flex items-center gap-1 text-[#c8a051] hover:text-[#eae5d8] transition-colors cursor-pointer border border-[#3c3a35] px-2 py-0.5 bg-[#242220] text-[11px]"
                 title="复位圆环"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -446,60 +459,61 @@ export const FoucaultPanopticonSimulation: React.FC = () => {
       {/* Main Interactive Stage */}
       <div
         ref={containerRef}
-        onMouseMove={handleMouseMove}
-        className="relative flex-1 w-full min-h-[500px] overflow-hidden select-none bg-[#161514]"
+        onPointerMove={handlePointerMove}
+        onPointerDown={handlePointerDown}
+        className="relative flex-1 w-full min-h-[440px] sm:min-h-[500px] overflow-hidden select-none bg-[#161514] touch-none"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
 
         {/* Top Floating Dossier Readout */}
-        <div className="absolute top-3 left-6 z-20 flex items-center gap-3 pointer-events-none">
+        <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-6 right-2.5 sm:right-auto z-20 flex items-center gap-2 pointer-events-none max-w-[94%]">
           {mode === 'panopticon' ? (
-            <div className="bg-[#1f1e1b]/90 backdrop-blur-md px-3.5 py-1.5 border border-[#3c3933] shadow-lg flex items-center gap-2.5">
-              <Eye className="w-3.5 h-3.5 text-[#c8a051]" />
-              <div className="font-mono text-[10.5px] space-x-2">
-                <span className="text-[#a8a398]">SURVEILLANCE FOCUS:</span>
-                <span className="text-[#fef08a] font-bold">{observedCount} 间牢房置于强光下</span>
-                <span className="text-[#6b675e]">|</span>
-                <span className="text-[#a8a398]">DISCIPLINARY PRINCIPLE:</span>
-                <span className="text-[#eae5d8]">“见而不能知，知而不能见”</span>
+            <div className="bg-[#1f1e1b]/92 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 border border-[#3c3933] shadow-lg flex items-center gap-2 truncate">
+              <Eye className="w-3.5 h-3.5 text-[#c8a051] shrink-0" />
+              <div className="font-mono text-[10px] sm:text-[10.5px] truncate">
+                <span className="text-[#a8a398]">监视:</span>{' '}
+                <span className="text-[#fef08a] font-bold">{observedCount} 间被视</span>
+                <span className="hidden sm:inline text-[#6b675e] mx-1.5">|</span>
+                <span className="hidden sm:inline text-[#eae5d8]">“见而不能知，知而不能见”</span>
               </div>
             </div>
           ) : (
-            <div className="bg-[#1f1e1b]/90 backdrop-blur-md px-3.5 py-1.5 border border-[#3c3933] shadow-lg flex items-center gap-2.5">
-              <SplitSquareVertical className="w-3.5 h-3.5 text-[#c8a051]" />
-              <div className="font-mono text-[10.5px] space-x-2">
-                <span className="text-[#a8a398]">HETEROTOPIA:</span>
-                <span className="text-[#c8a051] font-bold">镜面使我自身在缺席之处变得可见</span>
+            <div className="bg-[#1f1e1b]/92 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 border border-[#3c3933] shadow-lg flex items-center gap-2">
+              <SplitSquareVertical className="w-3.5 h-3.5 text-[#c8a051] shrink-0" />
+              <div className="font-mono text-[10px] sm:text-[10.5px]">
+                <span className="text-[#c8a051] font-bold">镜面：使自身在缺席之所可见</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Bottom Archival Epigraph Card */}
-        <div className="absolute bottom-3 left-6 right-6 z-30 pointer-events-none">
-          <div className="bg-[#1d1c1a]/92 backdrop-blur-md px-4 py-3 border border-[#383631] shadow-xl max-w-2xl mx-auto text-center pointer-events-auto">
-            {mode === 'panopticon' ? (
-              <>
-                <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
-                  “全景敞视建筑是一种奇妙的机器：无论人们出于何种动机来使用它，它所产生的权力效应都是同质的……被规训者不需要手铐脚镣，中央视线的潜在可能性已经让他主动内化了对自我的监视。”
-                </p>
-                <div className="mt-1 flex items-center justify-center gap-3 font-mono text-[10px] text-[#9e978c]">
-                  <span>米歇尔·福柯《规训与惩罚》· 1975</span>
-                  <span>•</span>
-                  <span>建筑即权力的毛细管技术</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
-                  “镜子是一个没有地方的地方……我在那里发现自己不在我身在之地，而是在一片虚拟的空间里。从那双从镜子深处投向我的眼睛开始，我折返自身，重新审视我自己。”
-                </p>
-                <div className="mt-1 flex items-center justify-center gap-3 font-mono text-[10px] text-[#c8a051]">
-                  <span>米歇尔·福柯《异质拓扑学与不同空间》· 1967</span>
-                  <span>•</span>
-                  <span>异托邦是常态空间的审判法庭</span>
-                </div>
-              </>
+        {/* Bottom Archival Epigraph Card with Mobile Collapse/Expand */}
+        <div className="absolute bottom-2 sm:bottom-3 left-2.5 sm:left-6 right-2.5 sm:right-6 z-30 pointer-events-none">
+          <div className="bg-[#1d1c1a]/92 backdrop-blur-md px-3 py-2 sm:px-4 sm:py-3 border border-[#383631] shadow-xl max-w-2xl mx-auto pointer-events-auto">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-[#9e978c] font-mono truncate">
+                {mode === 'panopticon' ? '米歇尔·福柯《规训与惩罚》(1975)' : '米歇尔·福柯《异托邦》(1967)'}
+              </span>
+              <button
+                onClick={() => setIsQuoteExpanded(v => !v)}
+                className="text-[10px] font-mono text-[#c8a051] hover:text-[#eae5d8] cursor-pointer flex items-center gap-1 shrink-0 px-1.5 py-0.5 border border-[#3c3a35] bg-[#242220]"
+              >
+                <span>{isQuoteExpanded ? '收起' : '展开'}</span>
+                {isQuoteExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              </button>
+            </div>
+            {isQuoteExpanded && (
+              <div className="mt-2 pt-2 border-t border-[#35332f] text-center">
+                {mode === 'panopticon' ? (
+                  <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
+                    “全景敞视建筑是一种奇妙的机器：无论人们出于何种动机来使用它，它所产生的权力效应都是同质的……被规训者不需要手铐脚镣，中央视线的潜在可能性已经让他主动内化了对自我的监视。”
+                  </p>
+                ) : (
+                  <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
+                    “镜子是一个没有地方的地方……我在那里发现自己不在我身在之地，而是在一片虚拟的空间里。从那双从镜子深处投向我的眼睛开始，我折返自身，重新审视我自己。”
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>

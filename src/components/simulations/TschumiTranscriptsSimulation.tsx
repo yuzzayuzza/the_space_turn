@@ -6,6 +6,8 @@ import {
   RotateCcw,
   Layers,
   HelpCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { audioAtmosphere } from '../../utils/audioAtmosphere';
 
@@ -31,6 +33,7 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [montageMode, setMontageMode] = useState<'triad' | 'superimposed'>('triad');
   const [showLegendModal, setShowLegendModal] = useState<boolean>(false); // 默认不展开占用视野
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
 
   // 深刻诠释伯纳德·屈米《曼哈顿转录》中颜色与事件的对应哲学
   const eventConfigs: Record<EventType, EventConfig> = {
@@ -293,20 +296,20 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
       ctx.restore();
     };
 
-    const drawEventLayer = (cx: number, cy: number, shock: number) => {
+    const drawEventLayer = (cx: number, cy: number, shock: number, isMobile: boolean) => {
       ctx.save();
       ctx.translate(cx, cy);
 
-      const eventPulse = Math.sin(time * 4) * 8 * shock;
-      const coreRadius = 36 + eventPulse;
+      const eventPulse = Math.sin(time * 4) * 6 * shock;
+      const coreRadius = (isMobile ? 24 : 36) + eventPulse;
 
       for (let ring = 1; ring <= 3; ring++) {
-        const rR = coreRadius + ring * (16 + Math.sin(time * 3) * 6);
+        const rR = coreRadius + ring * ((isMobile ? 10 : 16) + Math.sin(time * 3) * 4);
         ctx.beginPath();
-        ctx.arc(0, 0, Math.max(10, rR), 0, Math.PI * 2);
+        ctx.arc(0, 0, Math.max(8, rR), 0, Math.PI * 2);
         ctx.strokeStyle = cfg.hueColor;
         ctx.globalAlpha = Math.max(0.15, 0.7 - ring * 0.18);
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2;
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -319,14 +322,14 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.font = 'bold 12px "Noto Serif SC", serif';
+      ctx.font = isMobile ? 'bold 10px "Noto Serif SC", serif' : 'bold 12px "Noto Serif SC", serif';
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.fillText(activeEventType === 'normal' ? '常规程序' : '偶发暴突', 0, -3);
+      ctx.fillText(activeEventType === 'normal' ? '常规' : '偶发暴突', 0, -2);
 
-      ctx.font = '10px "Noto Serif SC", serif';
+      ctx.font = isMobile ? '9px "Noto Serif SC", serif' : '10px "Noto Serif SC", serif';
       ctx.fillStyle = cfg.hueColor;
-      ctx.fillText(`震荡系数: ${shock.toFixed(1)}x`, 0, 14);
+      ctx.fillText(`${shock.toFixed(1)}x`, 0, isMobile ? 11 : 14);
 
       ctx.restore();
     };
@@ -337,36 +340,38 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
       const h = containerRef.current?.clientHeight || 500;
       ctx.clearRect(0, 0, w, h);
 
+      const isMobile = w < 640;
       const currentShock = cfg.shockFactor;
-      const topY = 48;
-      // Leave ample clear space for bottom card (h - 170 ensures zero collision)
-      const frameH = Math.max(250, h - 165);
+      const topY = isMobile ? 46 : 46;
+      // Leave ample clear space for bottom card
+      const frameH = Math.max(220, h - topY - (isMobile ? 70 : 85));
 
       if (montageMode === 'triad') {
         // Clear 3-Column Filmic Strip Layout
-        const padX = 24;
-        const colW = (w - padX * 2 - 24) / 3;
+        const padX = isMobile ? 8 : 24;
+        const colGap = isMobile ? 6 : 12;
+        const colW = (w - padX * 2 - colGap * 2) / 3;
 
         const columns = [
           {
-            name: '第一轨 · 空间图式 (SPACES)',
-            sub: '建筑构件 / 平立剖破裂',
+            name: isMobile ? '空间图式' : '第一轨 · 空间图式 (SPACES)',
+            sub: '平立剖破裂',
             col: 0,
           },
           {
-            name: '第二轨 · 运动轨迹 (MOVEMENTS)',
-            sub: '身体矢量 / 舞蹈动线',
+            name: isMobile ? '运动轨迹' : '第二轨 · 运动轨迹 (MOVEMENTS)',
+            sub: '舞蹈身体动线',
             col: 1,
           },
           {
-            name: '第三轨 · 偶发事件 (EVENTS)',
-            sub: '突发戏剧 / 政治与暴力',
+            name: isMobile ? '偶发事件' : '第三轨 · 偶发事件 (EVENTS)',
+            sub: '戏剧冲突与暴力',
             col: 2,
           },
         ];
 
         columns.forEach(c => {
-          const fx = padX + c.col * (colW + 12);
+          const fx = padX + c.col * (colW + colGap);
 
           // Column frame container
           ctx.fillStyle = '#151318';
@@ -378,23 +383,25 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
           ctx.strokeRect(fx, topY, colW, frameH);
 
           // Filmstrip sprocket perforations
-          const sprockets = 7;
+          const sprockets = isMobile ? 4 : 7;
           for (let s = 0; s < sprockets; s++) {
-            const sx = fx + 10 + s * ((colW - 24) / (sprockets - 1));
+            const sx = fx + 6 + s * ((colW - 16) / Math.max(1, sprockets - 1));
             ctx.fillStyle = '#221f27';
-            ctx.fillRect(sx - 3, topY + 4, 6, 7);
-            ctx.fillRect(sx - 3, topY + frameH - 11, 6, 7);
+            ctx.fillRect(sx - 2, topY + 3, 4, 5);
+            ctx.fillRect(sx - 2, topY + frameH - 8, 4, 5);
           }
 
-          // Header Text
-          ctx.font = '600 12px "Noto Serif SC", serif';
+          // Header Text (Comfortable vertical separation)
+          ctx.font = isMobile ? '600 10.5px "Noto Serif SC", serif' : '600 12px "Noto Serif SC", serif';
           ctx.fillStyle = activeEventType === 'normal' ? '#f5efe6' : '#fbbf24';
           ctx.textAlign = 'left';
-          ctx.fillText(c.name, fx + 10, topY - 14);
+          ctx.fillText(c.name, fx + (isMobile ? 4 : 10), isMobile ? 22 : topY - 18);
 
-          ctx.font = '10px "Noto Serif SC", serif';
-          ctx.fillStyle = '#aba3b5';
-          ctx.fillText(c.sub, fx + 10, topY - 2);
+          if (!isMobile) {
+            ctx.font = '10px "Noto Serif SC", serif';
+            ctx.fillStyle = '#aba3b5';
+            ctx.fillText(c.sub, fx + 10, topY - 4);
+          }
 
           const midX = fx + colW * 0.5;
           const midY = topY + frameH * 0.5;
@@ -404,12 +411,12 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
           } else if (c.col === 1) {
             drawMovementLayer(midX, midY, colW * 0.8, frameH * 0.7);
           } else if (c.col === 2) {
-            drawEventLayer(midX, midY, currentShock);
+            drawEventLayer(midX, midY, currentShock, isMobile);
           }
         });
       } else {
         // Superimposed Montage Mode - All 3 layers simultaneously superimposed in one collision stage
-        const padX = 32;
+        const padX = isMobile ? 12 : 32;
         const frameW = w - padX * 2;
         const cx = w * 0.5;
         const cy = topY + frameH * 0.5;
@@ -422,23 +429,29 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
         ctx.strokeRect(padX, topY, frameW, frameH);
 
         // Sprocket perforations
-        const sprockets = 16;
+        const sprockets = isMobile ? 8 : 16;
         for (let s = 0; s < sprockets; s++) {
-          const sx = padX + 16 + s * ((frameW - 32) / (sprockets - 1));
+          const sx = padX + 12 + s * ((frameW - 24) / (sprockets - 1));
           ctx.fillStyle = '#201d25';
-          ctx.fillRect(sx - 4, topY + 4, 8, 7);
-          ctx.fillRect(sx - 4, topY + frameH - 11, 8, 7);
+          ctx.fillRect(sx - 3, topY + 4, 6, 6);
+          ctx.fillRect(sx - 3, topY + frameH - 10, 6, 6);
         }
 
-        // Title indicator
-        ctx.font = '600 12px "Noto Serif SC", serif';
+        // Title and epigraph text with strict vertical line separation to prevent overlap
+        ctx.font = isMobile ? '600 11px "Noto Serif SC", serif' : '600 12.5px "Noto Serif SC", serif';
         ctx.fillStyle = cfg.hueColor;
         ctx.textAlign = 'left';
-        ctx.fillText('三元共时重叠场 (SUPERIMPOSED COLLISION FIELD) —— 空间 × 运动 × 事件', padX + 12, topY - 14);
+        const titleText = isMobile
+          ? '三元共时重叠场 (空间×运动×事件)'
+          : '三元共时重叠场 (SUPERIMPOSED COLLISION FIELD) —— 空间 × 运动 × 事件';
+        ctx.fillText(titleText, padX + (isMobile ? 4 : 12), isMobile ? 18 : topY - 18);
 
-        ctx.font = '10px "Noto Serif SC", serif';
+        ctx.font = isMobile ? '9px "Noto Serif SC", serif' : '10px "Noto Serif SC", serif';
         ctx.fillStyle = '#aba3b5';
-        ctx.fillText('“空间因运动而具有方向，形式因事件的暴力撕裂而展现本真”', padX + 12, topY - 2);
+        const quoteText = isMobile
+          ? (w < 380 ? '“形式因事件的暴力撕裂而展现本真”' : '“空间因运动而具方向，形式因事件撕裂展现本真”')
+          : '“空间因运动而具有方向，形式因事件的暴力撕裂而展现本真”';
+        ctx.fillText(quoteText, padX + (isMobile ? 4 : 12), isMobile ? 34 : topY - 4);
 
         // 1. Base architectural space layer
         drawSpaceLayer(cx, cy, Math.min(frameW, frameH) * 0.32, currentShock);
@@ -447,7 +460,7 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
         drawMovementLayer(cx, cy, frameW * 0.55, frameH * 0.75);
 
         // 3. Shockwave event pulse layer
-        drawEventLayer(cx, cy, currentShock);
+        drawEventLayer(cx, cy, currentShock, isMobile);
       }
 
       animId = requestAnimationFrame(render);
@@ -466,33 +479,33 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#131216] text-[#eae5df] select-none relative overflow-hidden font-serif-sc">
       {/* Top Editorial Archival Bar */}
-      <div className="px-6 py-3.5 bg-[#1d1c1a] border-b border-[#35332f] flex flex-wrap items-center justify-between gap-3 text-xs z-30">
-        <div className="flex items-center gap-3">
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3.5 bg-[#1d1c1a] border-b border-[#35332f] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 text-xs z-30">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div
-            className="w-2 h-2 rounded-full animate-pulse shadow-sm"
+            className="w-2 h-2 rounded-full animate-pulse shadow-sm shrink-0"
             style={{ backgroundColor: activeCfg.hueColor }}
           />
-          <span className="font-serif font-medium tracking-wide text-[#eae5d8]">
+          <span className="font-serif font-medium tracking-wide text-[#eae5d8] truncate text-xs">
             伯纳德·屈米：曼哈顿转录（空间·运动·事件三联蒙太奇）
           </span>
-          <span className="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#4a4742] text-[#c8a051] bg-[#262422]">
-            THE MANHATTAN TRANSCRIPTS · 1981
+          <span className="hidden sm:inline-block font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#4a4742] text-[#c8a051] bg-[#262422] shrink-0">
+            1981
           </span>
         </div>
 
         {/* Action Controls & Legend Toggle */}
-        <div className="flex items-center gap-3 text-xs text-[#b3abbc]">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-[#b3abbc]">
           <button
             onClick={() => setShowLegendModal(prev => !prev)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 border transition-colors cursor-pointer text-xs ${
+            className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 border transition-colors cursor-pointer text-[11px] sm:text-xs ${
               showLegendModal
                 ? 'bg-[#c8a051] text-[#141210] border-[#c8a051] font-semibold'
                 : 'bg-[#27232e] text-[#c8a051] border-[#443a4e] hover:text-[#f5efe6]'
             }`}
             title="查看色彩谱系与空间含义"
           >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>颜色释义</span>
+            <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>释义</span>
           </button>
 
           <div className="bg-[#24202b] p-0.5 border border-[#3b3445] flex items-center">
@@ -501,32 +514,32 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
                 setMontageMode('triad');
                 audioAtmosphere.playChime(360);
               }}
-              className={`px-2.5 py-1 font-serif text-xs transition-colors cursor-pointer ${
+              className={`px-2 sm:px-2.5 py-0.5 sm:py-1 font-serif text-[11px] sm:text-xs transition-colors cursor-pointer ${
                 montageMode === 'triad'
                   ? 'bg-[#eae5dd] text-[#131215] font-semibold'
                   : 'text-[#a39aa9] hover:text-[#eae5dd]'
               }`}
             >
-              三轨独立蒙太奇
+              三轨独立
             </button>
             <button
               onClick={() => {
                 setMontageMode('superimposed');
                 audioAtmosphere.playChime(460);
               }}
-              className={`px-2.5 py-1 font-serif text-xs transition-colors cursor-pointer ${
+              className={`px-2 sm:px-2.5 py-0.5 sm:py-1 font-serif text-[11px] sm:text-xs transition-colors cursor-pointer ${
                 montageMode === 'superimposed'
                   ? 'bg-[#eae5dd] text-[#131215] font-semibold'
                   : 'text-[#a39aa9] hover:text-[#eae5dd]'
               }`}
             >
-              重叠冲突场
+              重叠场
             </button>
           </div>
 
           <button
             onClick={() => triggerEvent('normal')}
-            className="flex items-center gap-1.5 text-[#c8a051] hover:text-[#eae5df] transition-colors cursor-pointer border border-[#443a4e] px-2 py-1 bg-[#27232e]"
+            className="flex items-center gap-1 text-[#c8a051] hover:text-[#eae5df] transition-colors cursor-pointer border border-[#443a4e] px-2 py-0.5 bg-[#27232e] text-[11px]"
             title="恢复静默几何状态"
           >
             <RotateCcw className="w-3 h-3" />
@@ -535,60 +548,58 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
         </div>
       </div>
 
+      {/* Dedicated Episode Selector Bar: completely clears canvas view */}
+      <div className="px-3 sm:px-6 py-2 bg-[#141218] border-b border-[#2d2737] flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <span className="font-mono text-[9.5px] sm:text-[10px] uppercase tracking-wider text-[#a89fad] px-1 py-0.5 shrink-0">
+            剧目:
+          </span>
+
+          {(
+            [
+              { id: 'normal', label: '1.静默日常', color: '#c8a051' },
+              { id: 'murder', label: '2.凶杀案', color: '#ef4444' },
+              { id: 'skate', label: '3.滑板狂欢', color: '#38bdf8' },
+              { id: 'riot', label: '4.街头暴动', color: '#f97316' },
+              { id: 'fall', label: '5.坠落失重', color: '#ec4899' },
+            ] as const
+          ).map(ev => {
+            const isCurrent = activeEventType === ev.id;
+            return (
+              <button
+                key={ev.id}
+                onClick={() => triggerEvent(ev.id)}
+                className={`px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-serif transition-all cursor-pointer border flex items-center gap-1 sm:gap-1.5 shrink-0 whitespace-nowrap rounded ${
+                  isCurrent
+                    ? 'bg-[#312b3a] border-[#c8a051] text-[#ffffff] font-bold shadow-lg'
+                    : 'bg-[#1e1a24] border-[#3d3648] text-[#c5bccd] hover:border-[#867b93] hover:text-[#ffffff]'
+                }`}
+              >
+                <span
+                  className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
+                  style={{ backgroundColor: ev.color }}
+                />
+                <span>{ev.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="text-[11px] font-mono text-[#c8a051] shrink-0 hidden md:block">
+          EPISODE: {activeCfg.titleEn}
+        </div>
+      </div>
+
       {/* Main Stage */}
       <div
         ref={containerRef}
-        className="relative flex-1 w-full min-h-[500px] overflow-hidden select-none bg-[#111013]"
+        className="relative flex-1 w-full min-h-[440px] sm:min-h-[500px] overflow-hidden select-none bg-[#111013] touch-none"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
 
-        {/* Top Interactive Event Selector Buttons with Clear Color Indicator */}
-        <div className="absolute top-3 left-6 right-6 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
-          <div className="flex items-center gap-1.5 flex-wrap bg-[#1c1922]/90 p-1 border border-[#3a3344] backdrop-blur-md">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#b3abbc] px-2 py-0.5">
-              注入偶发剧目:
-            </span>
-
-            {(
-              [
-                { id: 'normal', label: '1. 静默日常', color: '#c8a051' },
-                { id: 'murder', label: '2. 凶杀案', color: '#ef4444' },
-                { id: 'skate', label: '3. 滑板狂欢', color: '#38bdf8' },
-                { id: 'riot', label: '4. 街头暴动', color: '#f97316' },
-                { id: 'fall', label: '5. 坠落失重', color: '#ec4899' },
-              ] as const
-            ).map(ev => {
-              const isCurrent = activeEventType === ev.id;
-              return (
-                <button
-                  key={ev.id}
-                  onClick={() => triggerEvent(ev.id)}
-                  className={`px-3 py-1 text-xs font-serif transition-all cursor-pointer border flex items-center gap-1.5 ${
-                    isCurrent
-                      ? 'bg-[#312b3a] border-[#c8a051] text-[#ffffff] font-bold shadow-lg'
-                      : 'bg-[#221d28]/70 border-[#3d3648] text-[#c5bccd] hover:border-[#867b93] hover:text-[#ffffff]'
-                  }`}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: ev.color }}
-                  />
-                  <span>{ev.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="bg-[#1c1922]/90 backdrop-blur-md px-3.5 py-1 border border-[#3a3344] text-right hidden lg:block">
-            <span className="font-mono text-[11px] text-[#c8a051] font-semibold">
-              EPISODE: {activeCfg.titleEn}
-            </span>
-          </div>
-        </div>
-
-        {/* Compact Color Meaning Floating Tooltip (Compact, does not obstruct view) */}
+        {/* Compact Color Meaning Floating Tooltip */}
         {showLegendModal && (
-          <div className="absolute top-14 left-6 z-20 max-w-xs pointer-events-auto">
+          <div className="absolute top-12 sm:top-14 left-2.5 sm:left-6 right-2.5 sm:right-auto max-w-sm z-20 pointer-events-auto">
             <div className="bg-[#1a1720]/95 backdrop-blur-md p-3 border border-[#433b4e] shadow-xl space-y-1.5 text-xs">
               <div className="flex items-center justify-between border-b border-[#352e3e] pb-1">
                 <span className="font-mono font-bold text-[#c8a051] text-[11px]">
@@ -596,7 +607,7 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
                 </span>
                 <button
                   onClick={() => setShowLegendModal(false)}
-                  className="text-[#9e95a7] hover:text-[#ffffff] cursor-pointer text-xs"
+                  className="text-[#9e95a7] hover:text-[#ffffff] cursor-pointer text-xs px-1"
                 >
                   ✕
                 </button>
@@ -615,17 +626,28 @@ export const TschumiTranscriptsSimulation: React.FC = () => {
           </div>
         )}
 
-        {/* Standard Archival Epigraph Card (Harmonized with Foucault/Heidegger, unobtrusive) */}
-        <div className="absolute bottom-4 left-6 right-6 z-30 pointer-events-none">
-          <div className="bg-[#1d1c1a]/92 backdrop-blur-md p-4 border border-[#383631] shadow-xl max-w-3xl mx-auto text-center pointer-events-auto">
-            <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
-              “建筑从来不是由墙体与柱子单独构成的。唯有当不可预料的‘事件’与身体激烈的‘运动’撞击冰冷的形式时，真正的建筑学才告诞生。没有无事件的建筑，没有无暴力的形式。”
-            </p>
-            <div className="mt-1.5 flex items-center justify-center gap-3 font-mono text-[10px] text-[#9e978c]">
-              <span>伯纳德·屈米《曼哈顿转录》· 1981</span>
-              <span>•</span>
-              <span className="text-[#c8a051]">【{activeCfg.titleZh}】震荡系数: {activeCfg.shockFactor.toFixed(1)}x</span>
+        {/* Standard Archival Epigraph Card with Mobile Collapse/Expand */}
+        <div className="absolute bottom-2 sm:bottom-4 left-2.5 sm:left-6 right-2.5 sm:right-6 z-30 pointer-events-none">
+          <div className="bg-[#1d1c1a]/92 backdrop-blur-md px-3 py-2 sm:p-4 border border-[#383631] shadow-xl max-w-3xl mx-auto pointer-events-auto">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-[#9e978c] font-mono truncate">
+                伯纳德·屈米《曼哈顿转录》· 震荡系数: {activeCfg.shockFactor.toFixed(1)}x
+              </span>
+              <button
+                onClick={() => setIsQuoteExpanded(v => !v)}
+                className="text-[10px] font-mono text-[#c8a051] hover:text-[#eae5d8] cursor-pointer flex items-center gap-1 shrink-0 px-1.5 py-0.5 border border-[#443a4e] bg-[#27232e]"
+              >
+                <span>{isQuoteExpanded ? '收起' : '展开'}</span>
+                {isQuoteExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              </button>
             </div>
+            {isQuoteExpanded && (
+              <div className="mt-2 pt-2 border-t border-[#383631] text-center">
+                <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
+                  “建筑从来不是由墙体与柱子单独构成的。唯有当不可预料的‘事件’与身体激烈的‘运动’撞击冰冷的形式时，真正的建筑学才告诞生。没有无事件的建筑，没有无暴力的形式。”
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

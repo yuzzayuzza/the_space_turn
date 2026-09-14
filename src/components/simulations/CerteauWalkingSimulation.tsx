@@ -10,6 +10,9 @@ import {
   Minimize2,
   Navigation,
   Wind,
+  ChevronDown,
+  ChevronUp,
+  X,
 } from 'lucide-react';
 import { audioAtmosphere } from '../../utils/audioAtmosphere';
 
@@ -55,6 +58,8 @@ export const CerteauWalkingSimulation: React.FC = () => {
   // User interactive walker cursor position
   const [userWalker, setUserWalker] = useState<{ x: number; y: number }>({ x: 0.5, y: 0.5 });
   const [userBreadcrumbs, setUserBreadcrumbs] = useState<{ x: number; y: number; time: number }[]>([]);
+  const [isParadigmOpen, setIsParadigmOpen] = useState<boolean>(false);
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth >= 768);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -121,6 +126,47 @@ export const CerteauWalkingSimulation: React.FC = () => {
       const h = containerRef.current?.clientHeight || 520;
       ctx.clearRect(0, 0, w, h);
 
+      const isMobile = w < 640;
+
+      // Safe bounds: top clears floating HUD badges (height ~46px), bottom clears epigraph card
+      const safeTopPx = isMobile ? 58 : 54;
+      const safeBottomPx = h - (isMobile ? 56 : 70);
+      const usableHeightPx = Math.max(260, safeBottomPx - safeTopPx);
+
+      // Block height & gaps dynamically fit within the usable zone
+      const blockHeightPx = Math.min(usableHeightPx * 0.23, isMobile ? 70 : 88);
+      const verticalGapPx = Math.max(16, (usableHeightPx - blockHeightPx * 3) / 2);
+
+      const rowY_px = [
+        safeTopPx + 6,
+        safeTopPx + 6 + blockHeightPx + verticalGapPx,
+        safeTopPx + 6 + (blockHeightPx + verticalGapPx) * 2,
+      ];
+      const rowY = rowY_px.map(y => y / h);
+      const blockH = blockHeightPx / h;
+      const colX = isMobile ? [0.08, 0.385, 0.69] : [0.07, 0.38, 0.69];
+      const blockW = isMobile ? 0.23 : 0.24;
+
+      const dynamicBlocks = [
+        { x: colX[0], y: rowY[0], w: blockW, h: blockH, name: '世贸金融立方', shortName: '世贸立方', zoneType: 'financial_grid' as const },
+        { x: colX[1], y: rowY[0], w: blockW, h: blockH, name: '行政全景枢纽', shortName: '全景枢纽', zoneType: 'panoptic_tower' as const },
+        { x: colX[2], y: rowY[0], w: blockW, h: blockH, name: '资本矩阵中心', shortName: '资本矩阵', zoneType: 'financial_grid' as const },
+        { x: colX[0], y: rowY[1], w: blockW, h: blockH, name: '规训消费大厦', shortName: '消费大厦', zoneType: 'surveilled_mall' as const },
+        { x: colX[1], y: rowY[1], w: blockW, h: blockH, name: '理性几何广场', shortName: '几何广场', zoneType: 'monument' as const },
+        { x: colX[2], y: rowY[1], w: blockW, h: blockH, name: '标准化公寓集群', shortName: '公寓集群', zoneType: 'financial_grid' as const },
+        { x: colX[0], y: rowY[2], w: blockW, h: blockH, name: '物流控制港', shortName: '控制港', zoneType: 'surveilled_mall' as const },
+        { x: colX[1], y: rowY[2], w: blockW, h: blockH, name: '中央规训绿地', shortName: '规训绿地', zoneType: 'monument' as const },
+        { x: colX[2], y: rowY[2], w: blockW, h: blockH, name: '国家档案网格', shortName: '档案网格', zoneType: 'panoptic_tower' as const },
+      ];
+
+      const currentRoadX = [0.04, 0.35, 0.65, 0.95];
+      const currentRoadY = [
+        Math.max(0.04, (safeTopPx - 8) / h),
+        (rowY_px[0] + blockHeightPx + verticalGapPx * 0.5) / h,
+        (rowY_px[1] + blockHeightPx + verticalGapPx * 0.5) / h,
+        Math.min(0.96, (rowY_px[2] + blockHeightPx + verticalGapPx * 0.5) / h),
+      ];
+
       // 1. Background Atmosphere: Voyeur is cold geometric dark slate, Walker is warm intimate charcoal
       if (perspective === 'voyeur') {
         // Cold blueprint grey grid of the Concept City
@@ -172,7 +218,7 @@ export const CerteauWalkingSimulation: React.FC = () => {
       }
 
       // 2. Draw Concept City Blocks (The Structural Place / 静态地点与权力建筑物)
-      blocks.forEach(blk => {
+      dynamicBlocks.forEach(blk => {
         const bx = blk.x * w;
         const by = blk.y * h;
         const bw = blk.w * w;
@@ -189,20 +235,24 @@ export const CerteauWalkingSimulation: React.FC = () => {
           // Inner crosshairs & security zones
           ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
           ctx.beginPath();
-          ctx.moveTo(bx + 6, by + 6);
-          ctx.lineTo(bx + bw - 6, by + bh - 6);
-          ctx.moveTo(bx + bw - 6, by + 6);
-          ctx.lineTo(bx + 6, by + bh - 6);
+          ctx.moveTo(bx + 4, by + 4);
+          ctx.lineTo(bx + bw - 4, by + bh - 4);
+          ctx.moveTo(bx + bw - 4, by + 4);
+          ctx.lineTo(bx + 4, by + bh - 4);
           ctx.stroke();
 
-          // Technical Label
-          ctx.font = '9px "JetBrains Mono", monospace';
+          // Technical Label (compact on mobile)
+          ctx.font = isMobile ? '9px "JetBrains Mono", monospace' : '10px "JetBrains Mono", monospace';
           ctx.fillStyle = '#38bdf8';
           ctx.textAlign = 'left';
-          ctx.fillText(`ZONE [${blk.name}]`, bx + 8, by + 16);
-          ctx.font = '8px "JetBrains Mono", monospace';
-          ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
-          ctx.fillText('STRATEGY · GEOMETRIC DISCIPLINE', bx + 8, by + 28);
+          const label = isMobile ? blk.shortName : `ZONE [${blk.name}]`;
+          ctx.fillText(label, bx + 6, by + (isMobile ? 14 : 16));
+
+          if (!isMobile && bw > 120) {
+            ctx.font = '8px "JetBrains Mono", monospace';
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+            ctx.fillText('STRATEGY · GEOMETRIC', bx + 6, by + 28);
+          }
         } else {
           // Street Level: Blocks are massive shadowy physical silhouettes, framing the pedestrian canyons
           ctx.fillStyle = 'rgba(24, 22, 20, 0.85)';
@@ -212,15 +262,16 @@ export const CerteauWalkingSimulation: React.FC = () => {
           ctx.strokeRect(bx, by, bw, bh);
 
           // Warm Ambient Glow in alleys
-          ctx.font = '10px "Noto Serif SC", serif';
-          ctx.fillStyle = 'rgba(168, 162, 158, 0.5)';
+          ctx.font = isMobile ? '10px "Noto Serif SC", serif' : '11px "Noto Serif SC", serif';
+          ctx.fillStyle = 'rgba(214, 208, 198, 0.8)';
           ctx.textAlign = 'left';
-          ctx.fillText(blk.name, bx + 10, by + 20);
+          ctx.fillText(isMobile ? blk.shortName : blk.name, bx + 6, by + (isMobile ? 16 : 20));
 
-          // Subtle poetic mark
-          ctx.font = '9px "Noto Serif SC", serif';
-          ctx.fillStyle = 'rgba(200, 160, 81, 0.35)';
-          ctx.fillText('等待被漫步者穿透的建筑外壳', bx + 10, by + 34);
+          if (!isMobile && bw > 120) {
+            ctx.font = '9px "Noto Serif SC", serif';
+            ctx.fillStyle = 'rgba(200, 160, 81, 0.4)';
+            ctx.fillText('等待漫步者穿透之外壳', bx + 6, by + 34);
+          }
         }
       });
 
@@ -230,13 +281,13 @@ export const CerteauWalkingSimulation: React.FC = () => {
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         // Draw designated planned routes
-        roadX.forEach(rx => {
+        currentRoadX.forEach(rx => {
           ctx.beginPath();
           ctx.moveTo(rx * w, 0);
           ctx.lineTo(rx * w, h);
           ctx.stroke();
         });
-        roadY.forEach(ry => {
+        currentRoadY.forEach(ry => {
           ctx.beginPath();
           ctx.moveTo(0, ry * h);
           ctx.lineTo(w, ry * h);
@@ -253,11 +304,11 @@ export const CerteauWalkingSimulation: React.FC = () => {
         const isTactical = walker.style !== 'compliant';
         if (isTactical) deviantCount++;
 
-        // If compliant, stick strictly to grid axes (roadX, roadY)
+        // If compliant, stick strictly to grid axes
         if (!isTactical || tacticalAgency < 25) {
           // Walk strictly on corridors
-          const nearestRoadX = roadX.reduce((prev, curr) => Math.abs(curr - walker.x) < Math.abs(prev - walker.x) ? curr : prev);
-          const nearestRoadY = roadY.reduce((prev, curr) => Math.abs(curr - walker.y) < Math.abs(prev - walker.y) ? curr : prev);
+          const nearestRoadX = currentRoadX.reduce((prev, curr) => Math.abs(curr - walker.x) < Math.abs(prev - walker.x) ? curr : prev);
+          const nearestRoadY = currentRoadY.reduce((prev, curr) => Math.abs(curr - walker.y) < Math.abs(prev - walker.y) ? curr : prev);
           
           const dx = nearestRoadX - walker.x;
           const dy = nearestRoadY - walker.y;
@@ -273,9 +324,9 @@ export const CerteauWalkingSimulation: React.FC = () => {
           const dist = Math.hypot(dx, dy);
 
           if (dist < 0.04) {
-            // Re-target new destination (often cutting diagonally through plazas or forbidden green belts)
+            // Re-target new destination within safe bounds
             walker.targetX = Math.random() * 0.84 + 0.08;
-            walker.targetY = Math.random() * 0.84 + 0.08;
+            walker.targetY = Math.random() * (isMobile ? 0.55 : 0.78) + 0.06;
             walker.tacticTimer = Math.random() * 80;
           } else {
             walker.x += (dx / dist) * walker.speed * (tacticalAgency / 50);
@@ -369,14 +420,18 @@ export const CerteauWalkingSimulation: React.FC = () => {
         ctx.shadowBlur = 0;
       }
 
-      // 8. User Floating Tooltip
+      // 8. User Floating Tooltip (Safely clamped)
       ctx.font = '11px "Noto Serif SC", serif';
       ctx.fillStyle = '#eae5d8';
       ctx.textAlign = 'center';
-      ctx.fillText('漫步者之足：正在践行空间', ux, uy - 24);
-      ctx.font = '9px "JetBrains Mono", monospace';
-      ctx.fillStyle = '#c8a051';
-      ctx.fillText('WALKING RHETORIC', ux, uy - 12);
+      const labelY = uy < 45 ? uy + 26 : uy - 20;
+      const labelX = Math.max(70, Math.min(w - 70, ux));
+      ctx.fillText('漫步者之足：践行空间', labelX, labelY);
+      if (!isMobile) {
+        ctx.font = '9px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#c8a051';
+        ctx.fillText('WALKING RHETORIC', labelX, uy - 10);
+      }
 
       animId = requestAnimationFrame(render);
     };
@@ -411,63 +466,63 @@ export const CerteauWalkingSimulation: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#141210] text-[#eae5df] select-none relative overflow-hidden font-serif-sc">
       {/* Top Editorial Archival Bar */}
-      <div className="px-6 py-3.5 bg-[#1d1c1a] border-b border-[#35332f] flex flex-wrap items-center justify-between gap-3 text-xs z-30">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#c8a051] animate-pulse" />
-          <span className="font-serif font-medium tracking-wide text-[#eae5d8]">
-            米歇尔·德·塞托：漫步之诗与空间战术 (The Practice of Everyday Life)
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3.5 bg-[#1d1c1a] border-b border-[#35332f] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 text-xs z-30">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-2 h-2 rounded-full bg-[#c8a051] animate-pulse shrink-0" />
+          <span className="font-serif font-medium tracking-wide text-[#eae5d8] truncate text-xs">
+            米歇尔·德·塞托：漫步之诗与空间战术
           </span>
-          <span className="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#4a4742] text-[#c8a051] bg-[#262422]">
-            WALKING IN THE CITY · 1980
+          <span className="hidden sm:inline-block font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#4a4742] text-[#c8a051] bg-[#262422] shrink-0">
+            1980
           </span>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-4 text-xs text-[#b8afa3]">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-[#b8afa3]">
           {/* Dual Perspective Switcher */}
-          <div className="bg-[#242220] p-0.5 border border-[#3c3a35] flex items-center">
+          <div className="bg-[#242220] p-0.5 border border-[#3c3a35] flex items-center shrink-0">
             <button
               onClick={() => {
                 setPerspective('voyeur');
                 audioAtmosphere.playChime(320);
               }}
-              className={`px-3 py-1 font-serif text-xs transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1 font-serif text-[11px] sm:text-xs transition-colors cursor-pointer flex items-center gap-1 sm:gap-1.5 ${
                 perspective === 'voyeur'
                   ? 'bg-[#eae7dd] text-[#161514] font-medium'
                   : 'text-[#9e9a91] hover:text-[#eae7dd]'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>世贸110F俯瞰 (规划策略)</span>
+              <span>俯瞰策略</span>
             </button>
             <button
               onClick={() => {
                 setPerspective('walker');
                 audioAtmosphere.playChime(480);
               }}
-              className={`px-3 py-1 font-serif text-xs transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1 font-serif text-[11px] sm:text-xs transition-colors cursor-pointer flex items-center gap-1 sm:gap-1.5 ${
                 perspective === 'walker'
                   ? 'bg-[#c8a051] text-[#161514] font-medium'
                   : 'text-[#9e9a91] hover:text-[#eae7dd]'
               }`}
             >
               <Footprints className="w-3.5 h-3.5" />
-              <span>街头漫步者 (游击战术)</span>
+              <span>漫步战术</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="font-serif text-[#d8cfc4]">战术能动性:</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="font-serif text-[#d8cfc4] text-[11px] sm:text-xs">能动性:</span>
             <input
               type="range"
               min="10"
               max="100"
               value={tacticalAgency}
               onChange={e => setTacticalAgency(Number(e.target.value))}
-              className="w-20 accent-[#c8a051] cursor-pointer"
+              className="w-16 sm:w-20 accent-[#c8a051] cursor-pointer"
               title="调节普通行人对规划红线的偏离程度"
             />
-            <span className="font-mono text-[10px] text-[#c8a051] w-6">{tacticalAgency}%</span>
+            <span className="font-mono text-[10px] text-[#c8a051] w-5 sm:w-6">{tacticalAgency}%</span>
           </div>
 
           <button
@@ -476,11 +531,11 @@ export const CerteauWalkingSimulation: React.FC = () => {
               setUserWalker({ x: 0.5, y: 0.5 });
               audioAtmosphere.playChime(380);
             }}
-            className="flex items-center gap-1.5 text-[#c8a051] hover:text-[#f4eee5] transition-colors cursor-pointer border border-[#443a2f] px-2.5 py-1 bg-[#241f1a]"
+            className="flex items-center gap-1 text-[#c8a051] hover:text-[#f4eee5] transition-colors cursor-pointer border border-[#443a2f] px-2 py-1 bg-[#241f1a]"
             title="清空轨迹"
           >
             <RotateCcw className="w-3 h-3" />
-            <span className="font-mono text-[10px] uppercase">清空步轨</span>
+            <span className="font-mono text-[10px] uppercase">清空</span>
           </button>
         </div>
       </div>
@@ -490,41 +545,98 @@ export const CerteauWalkingSimulation: React.FC = () => {
         ref={containerRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        className="relative flex-1 w-full min-h-[500px] overflow-hidden select-none cursor-crosshair bg-[#12100e]"
+        className="relative flex-1 w-full min-h-[440px] sm:min-h-[500px] overflow-hidden select-none cursor-crosshair bg-[#12100e] touch-none"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
 
         {/* Top Floating Telemetry Readout */}
-        <div className="absolute top-3.5 left-6 z-20 flex items-center gap-3 pointer-events-none">
+        <div className="absolute top-2.5 sm:top-3.5 left-3 sm:left-6 z-20 flex items-center gap-2 pointer-events-none max-w-[calc(100%-110px)] sm:max-w-none">
           {perspective === 'voyeur' ? (
-            <div className="bg-[#121620]/90 backdrop-blur-md px-3.5 py-1.5 border border-[#2b3a55] shadow-lg flex items-center gap-2.5">
-              <Eye className="w-3.5 h-3.5 text-[#38bdf8]" />
-              <div className="font-mono text-[10.5px] space-x-2">
-                <span className="text-[#94a3b8]">CONCEPT CITY (世贸顶层):</span>
-                <span className="text-[#38bdf8] font-bold">俯瞰全景的冷峻肉体抽离</span>
+            <div className="bg-[#121620]/90 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 border border-[#2b3a55] shadow-lg flex items-center gap-2 truncate">
+              <Eye className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
+              <div className="font-mono text-[10px] sm:text-[10.5px] truncate space-x-1 sm:space-x-2">
+                <span className="text-[#94a3b8] hidden sm:inline">CONCEPT CITY:</span>
+                <span className="text-[#38bdf8] font-bold">世贸110F俯瞰</span>
                 <span className="text-[#475569]">|</span>
-                <span className="text-[#94a3b8]">ORDER:</span>
-                <span className="text-[#cbd5e1]">几何规训网格与统计学数字</span>
+                <span className="text-[#cbd5e1] truncate">抽象几何规训图纸</span>
               </div>
             </div>
           ) : (
-            <div className="bg-[#1f1a14]/90 backdrop-blur-md px-3.5 py-1.5 border border-[#443a2a] shadow-lg flex items-center gap-2.5">
-              <Footprints className="w-3.5 h-3.5 text-[#c8a051]" />
-              <div className="font-mono text-[10.5px] space-x-2">
-                <span className="text-[#a89e8f]">TACTICAL FREEDOM (漫步实践):</span>
-                <span className="text-[#fef08a] font-bold">{tacticalFreedomRate}% 步轨撕裂规训红线</span>
+            <div className="bg-[#1f1a14]/90 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 border border-[#443a2a] shadow-lg flex items-center gap-2 truncate">
+              <Footprints className="w-3.5 h-3.5 text-[#c8a051] shrink-0" />
+              <div className="font-mono text-[10px] sm:text-[10.5px] truncate space-x-1 sm:space-x-2">
+                <span className="text-[#a89e8f] hidden sm:inline">TACTICAL:</span>
+                <span className="text-[#fef08a] font-bold">{tacticalFreedomRate}% 偏离率</span>
                 <span className="text-[#635848]">|</span>
-                <span className="text-[#a89e8f]">PRINCIPLE:</span>
-                <span className="text-[#eae5d8]">“空间是被践行着的地点”</span>
+                <span className="text-[#eae5d8] truncate">空间是被践行着的地点</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Vertical Explanatory Sidebar */}
+        {/* Mobile Trigger Button for Paradigm Modal */}
+        <button
+          onClick={() => setIsParadigmOpen(prev => !prev)}
+          className="md:hidden absolute top-2.5 right-3 z-30 flex items-center gap-1.5 bg-[#1a1714]/95 border border-[#c8a051] px-2.5 py-1 text-xs text-[#c8a051] shadow-lg backdrop-blur-md cursor-pointer"
+        >
+          <Sparkles className="w-3 h-3" />
+          <span>范式</span>
+          {isParadigmOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
+
+        {/* Mobile Modal for Strategy & Tactics */}
+        {isParadigmOpen && (
+          <div
+            onClick={() => setIsParadigmOpen(false)}
+            className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-xs bg-[#1a1714] border border-[#c8a051]/60 p-4 shadow-2xl space-y-3"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-[#3d3428]">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#c8a051]" />
+                  <span className="font-mono text-xs text-[#d4af37] font-semibold">德·塞托核心范式</span>
+                </div>
+                <button
+                  onClick={() => setIsParadigmOpen(false)}
+                  className="text-[#9e9587] hover:text-white p-1 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="space-y-2 text-xs font-serif leading-relaxed">
+                <div className="p-2.5 border bg-[#1e293b]/70 border-[#38bdf8] text-[#e2e8f0]">
+                  <div className="font-bold text-xs text-[#38bdf8] flex items-center justify-between">
+                    <span>策略 (Strategy)</span>
+                    <span className="font-mono text-[9px]">LE LIEU</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-normal">
+                    规划师与国家的几何权力，占据固定基地，将城市抽象为俯瞰图纸。
+                  </p>
+                </div>
+                <div className="p-2.5 border bg-[#2d2417]/80 border-[#c8a051] text-[#fef08a]">
+                  <div className="font-bold text-xs text-[#c8a051] flex items-center justify-between">
+                    <span>战术 (Tactics)</span>
+                    <span className="font-mono text-[9px]">L’ESPACE</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-normal text-[#eae5d8]">
+                    弱者的游击时间艺术：穿小巷、抄近道、驻足流连，用双脚把冷冰冰的“地点”踩踏成鲜活的“空间”。
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-[#3d3428]/60 text-[10px] text-[#9e9587] font-serif">
+                提示：在画布上任意拖拽漫步，留下自由光痕！
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Vertical Explanatory Sidebar */}
         <aside
           aria-label="策略与战术解析"
-          className="absolute top-6 right-5 z-20 pointer-events-auto flex flex-col gap-2 bg-[#1a1714]/92 p-3 border border-[#3d3428] backdrop-blur-md shadow-2xl max-w-[210px]"
+          className="hidden md:flex absolute top-6 right-5 z-20 pointer-events-auto flex-col gap-2 bg-[#1a1714]/92 p-3 border border-[#3d3428] backdrop-blur-md shadow-2xl max-w-[210px]"
         >
           <div className="flex items-center gap-1.5 pb-1.5 border-b border-[#3d3428]/80">
             <Sparkles className="w-3.5 h-3.5 text-[#c8a051]" />
@@ -572,31 +684,46 @@ export const CerteauWalkingSimulation: React.FC = () => {
           </div>
         </aside>
 
-        {/* Bottom Archival Epigraph Card */}
-        <div className="absolute bottom-3 left-6 right-6 z-30 pointer-events-none">
-          <div className="bg-[#1d1c1a]/92 backdrop-blur-md px-4 py-3 border border-[#383631] shadow-xl max-w-2xl mx-auto text-center pointer-events-auto">
-            {perspective === 'voyeur' ? (
-              <>
-                <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
-                  “站在世贸大厦第110层往下看，人们变成了窥视狂（Voyeur）。总体化的城市不过是一幅几何学的虚构之画，真正的生命与行走经验在高空被彻底抽空。”
-                </p>
-                <div className="mt-1 flex items-center justify-center gap-3 font-mono text-[10px] text-[#9e978c]">
-                  <span>米歇尔·德·塞托《日常生活实践》· 1980</span>
-                  <span>•</span>
-                  <span className="text-[#38bdf8]">概念之城：规训制图学与几何盲视</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
-                  “空间是被践行着的地点（Space is a practiced place）。街道由几何规划建立为地点，正是漫步者的双脚，如同言语使用语法一般，将它转化为充满诗意与抵抗的空间。”
-                </p>
-                <div className="mt-1 flex items-center justify-center gap-3 font-mono text-[10px] text-[#9e978c]">
-                  <span>米歇尔·德·塞托《日常生活实践》· 1980</span>
-                  <span>•</span>
-                  <span className="text-[#c8a051]">漫步修辞：提喻（抄近道）与隐喻（流连驻足）</span>
-                </div>
-              </>
+        {/* Bottom Archival Epigraph Card with Mobile Collapse/Expand */}
+        <div className="absolute bottom-2 sm:bottom-3 left-3 sm:left-6 right-3 sm:right-6 z-30 pointer-events-none">
+          <div className="bg-[#1d1c1a]/95 backdrop-blur-md px-3 py-2 sm:px-4 sm:py-3 border border-[#383631] shadow-xl max-w-2xl mx-auto pointer-events-auto">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-mono text-[10px] text-[#9e978c] truncate">
+                <span className={perspective === 'voyeur' ? 'text-[#38bdf8]' : 'text-[#c8a051]'}>
+                  {perspective === 'voyeur' ? '概念之城 (110F俯瞰)' : '街头漫步实践'}
+                </span>
+                <span className="hidden sm:inline">• 米歇尔·德·塞托《日常生活实践》· 1980</span>
+              </div>
+              <button
+                onClick={() => setIsQuoteExpanded(v => !v)}
+                className="text-[10px] font-mono text-[#c8a051] hover:text-[#eae5d8] cursor-pointer flex items-center gap-1 shrink-0 px-2 py-0.5 border border-[#383631]"
+              >
+                <span>{isQuoteExpanded ? '收起铭文' : '展开铭文'}</span>
+                {isQuoteExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              </button>
+            </div>
+            {isQuoteExpanded && (
+              <div className="mt-2 pt-2 border-t border-[#383631]/70 text-center">
+                {perspective === 'voyeur' ? (
+                  <>
+                    <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
+                      “站在世贸大厦第110层往下看，人们变成了窥视狂（Voyeur）。总体化的城市不过是一幅几何学的虚构之画，真正的生命与行走经验在高空被彻底抽空。”
+                    </p>
+                    <div className="mt-1 flex items-center justify-center gap-3 font-mono text-[10px] text-[#9e978c]">
+                      <span>概念之城：规训制图学与几何盲视</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs font-serif text-[#eae5d8] leading-relaxed italic">
+                      “空间是被践行着的地点（Space is a practiced place）。街道由几何规划建立为地点，正是漫步者的双脚，如同言语使用语法一般，将它转化为充满诗意与抵抗的空间。”
+                    </p>
+                    <div className="mt-1 flex items-center justify-center gap-3 font-mono text-[10px] text-[#9e978c]">
+                      <span>漫步修辞：提喻（抄近道）与隐喻（流连驻足）</span>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>

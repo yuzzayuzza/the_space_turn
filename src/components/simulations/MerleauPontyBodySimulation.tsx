@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Eye, Waves, Sparkles, RotateCcw } from 'lucide-react';
+import { Eye, Waves, Sparkles, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { audioAtmosphere } from '../../utils/audioAtmosphere';
 
 interface Ripple {
@@ -17,6 +17,7 @@ export const MerleauPontyBodySimulation: React.FC = () => {
   const [viscosity, setViscosity] = useState(65);
   const [horizonRadius, setHorizonRadius] = useState(190);
   const [isBreathing, setIsBreathing] = useState(true);
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   const ripplesRef = useRef<Ripple[]>([]);
 
   useEffect(() => {
@@ -46,11 +47,12 @@ export const MerleauPontyBodySimulation: React.FC = () => {
 
       const w = canvas.width;
       const h = canvas.height;
+      const isMobile = w < 640;
       const bodyX = cursorPos.x * w;
       const bodyY = cursorPos.y * h;
 
       const breath = isBreathing ? Math.sin(time) * 16 : 0;
-      const currentHorizon = horizonRadius + breath;
+      const currentHorizon = (horizonRadius + breath) * (isMobile ? 0.76 : 1.0);
 
       // Soft Alabaster & Warm Amber Flesh Gradient (No cyan neon)
       const grad = ctx.createRadialGradient(bodyX, bodyY, 12, bodyX, bodyY, currentHorizon * 1.4);
@@ -173,16 +175,21 @@ export const MerleauPontyBodySimulation: React.FC = () => {
     };
   }, [cursorPos, viscosity, horizonRadius, isBreathing]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const updatePointer = (clientX: number, clientY: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setCursorPos({
-      x: (e.clientX - rect.left) / rect.width,
-      y: (e.clientY - rect.top) / rect.height,
+      x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+      y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
     });
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    updatePointer(e.clientX, e.clientY);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    updatePointer(e.clientX, e.clientY);
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -201,43 +208,43 @@ export const MerleauPontyBodySimulation: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#151416] text-[#eae5df] select-none relative overflow-hidden">
       {/* Top Editorial Bar */}
-      <div className="px-6 py-3.5 bg-[#1b1a1d] border-b border-[#333036] flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#c8a051] animate-pulse" />
-          <span className="font-serif font-medium tracking-wide text-[#eae5df]">
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3.5 bg-[#1b1a1d] border-b border-[#333036] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 text-xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-2 h-2 rounded-full bg-[#c8a051] animate-pulse shrink-0" />
+          <span className="font-serif font-medium tracking-wide text-[#eae5df] truncate text-xs">
             莫里斯·梅洛-庞蒂：身体图式与世界之肉 (The Flesh)
           </span>
-          <span className="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#443f4a] text-[#c8a051] bg-[#252229]">
-            PHENOMENOLOGY OF PERCEPTION
+          <span className="hidden sm:inline-block font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#443f4a] text-[#c8a051] bg-[#252229] shrink-0">
+            1945
           </span>
         </div>
 
-        <div className="flex items-center gap-4 text-xs text-[#aba4b2]">
-          <div className="flex items-center gap-2">
-            <span className="font-serif">知觉黏滞感:</span>
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs text-[#aba4b2]">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="font-serif text-[11px] sm:text-xs">黏滞感:</span>
             <input
               type="range"
               min="20"
               max="100"
               value={viscosity}
               onChange={e => setViscosity(Number(e.target.value))}
-              className="w-18 accent-[#c8a051] cursor-pointer"
+              className="w-14 sm:w-18 accent-[#c8a051] cursor-pointer"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="font-serif">视界半径:</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="font-serif text-[11px] sm:text-xs">视界:</span>
             <input
               type="range"
               min="120"
               max="260"
               value={horizonRadius}
               onChange={e => setHorizonRadius(Number(e.target.value))}
-              className="w-18 accent-[#c8a051] cursor-pointer"
+              className="w-14 sm:w-18 accent-[#c8a051] cursor-pointer"
             />
           </div>
 
-          <label className="flex items-center gap-1.5 cursor-pointer hover:text-[#eae5df]">
+          <label className="flex items-center gap-1 cursor-pointer hover:text-[#eae5df] text-[11px] sm:text-xs">
             <input
               type="checkbox"
               checked={isBreathing}
@@ -252,26 +259,39 @@ export const MerleauPontyBodySimulation: React.FC = () => {
       {/* Main Interactive Stage */}
       <div
         ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onClick={handleClick}
-        className="relative flex-1 w-full min-h-[460px] cursor-none overflow-hidden select-none bg-[#131214]"
+        onPointerMove={handlePointerMove}
+        onPointerDown={handlePointerDown}
+        className="relative flex-1 w-full min-h-[440px] sm:min-h-[460px] cursor-none overflow-hidden select-none bg-[#131214] touch-none"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
 
         {/* Tip Indicator */}
-        <div className="absolute top-4 left-6 z-20 text-[11px] text-[#c8a051] bg-[#1e1c20]/90 px-3.5 py-1.5 border border-[#37323d] font-serif">
-          移动光标：肉身作为知觉的原点扰动空间织锦；点击画布激发触觉震颤涟漪
+        <div className="absolute top-2.5 sm:top-4 left-2.5 sm:left-6 right-2.5 sm:right-auto z-20 text-[10px] sm:text-[11px] text-[#c8a051] bg-[#1e1c20]/90 px-2.5 sm:px-3.5 py-1 sm:py-1.5 border border-[#37323d] font-serif">
+          触摸/移动：肉身扰动空间织锦；点击/按压激发触觉震颤涟漪
         </div>
 
-        {/* Bottom Annotation */}
-        <div className="absolute bottom-4 left-6 right-6 z-30 pointer-events-none">
-          <div className="bg-[#18171a]/92 backdrop-blur-md p-4 border border-[#34303b] shadow-xl max-w-2xl mx-auto text-center pointer-events-auto">
-            <p className="text-xs font-serif text-[#eae5df] leading-relaxed italic">
-              “我的身体并非处于客观空间之中的几何箱体，它是空间借以开启的始原之源。看者与可见者、触者与被触者在此交错缠绕。”
-            </p>
-            <span className="block mt-1.5 font-mono text-[10px] text-[#c8a051]">
-              莫里斯·梅洛-庞蒂《知觉现象学》· 1945
-            </span>
+        {/* Bottom Annotation with Mobile Collapse/Expand */}
+        <div className="absolute bottom-2 sm:bottom-4 left-2.5 sm:left-6 right-2.5 sm:right-6 z-30 pointer-events-none">
+          <div className="bg-[#18171a]/92 backdrop-blur-md px-3 py-2 sm:p-4 border border-[#34303b] shadow-xl max-w-2xl mx-auto pointer-events-auto">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-[#c8a051] font-mono truncate">
+                莫里斯·梅洛-庞蒂《知觉现象学》· 1945
+              </span>
+              <button
+                onClick={() => setIsQuoteExpanded(v => !v)}
+                className="text-[10px] font-mono text-[#c8a051] hover:text-[#eae5df] cursor-pointer flex items-center gap-1 shrink-0 px-1.5 py-0.5 border border-[#443f4a] bg-[#221f26]"
+              >
+                <span>{isQuoteExpanded ? '收起' : '展开'}</span>
+                {isQuoteExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              </button>
+            </div>
+            {isQuoteExpanded && (
+              <div className="mt-2 pt-2 border-t border-[#34303b] text-center">
+                <p className="text-xs font-serif text-[#eae5df] leading-relaxed italic">
+                  “我的身体并非处于客观空间之中的几何箱体，它是空间借以开启的始原之源。看者与可见者、触者与被触者在此交错缠绕。”
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

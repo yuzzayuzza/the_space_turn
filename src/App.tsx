@@ -35,50 +35,50 @@ export default function App() {
       />
 
       {/* Main Editorial Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-8 py-2.5 sm:py-8">
         {/* Editorial Masthead Banner */}
-        <div className="mb-10 border border-[#121212] bg-[#fdfcf8] p-6 sm:p-10 shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="mb-2.5 sm:mb-10 border border-[#121212] bg-[#fdfcf8] p-3.5 sm:p-10 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start">
             <div className="lg:col-span-8 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-[11px] uppercase font-mono tracking-[0.3em] font-bold text-[#121212]">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                  <span className="text-[10px] sm:text-[11px] uppercase font-mono tracking-[0.25em] sm:tracking-[0.3em] font-bold text-[#121212]">
                     THE SPATIAL COMPENDIUM
                   </span>
-                  <div className="h-[1px] w-12 bg-[#121212]"></div>
-                  <span className="text-[11px] font-serif italic text-[#121212]/70">
+                  <div className="h-[1px] w-8 sm:w-12 bg-[#121212]"></div>
+                  <span className="text-[10px] sm:text-[11px] font-serif italic text-[#121212]/70">
                     人类知觉的十维拓扑
                   </span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl leading-[0.95] font-light tracking-tighter mb-5 font-serif text-[#121212]">
+                <h1 className="text-3xl sm:text-6xl lg:text-7xl leading-[0.95] font-light tracking-tighter mb-2.5 sm:mb-5 font-serif text-[#121212]">
                   Towards a <br />
                   <span className="italic font-normal">Philosophy</span> of Space
                 </h1>
 
-                <p className="text-sm sm:text-base max-w-2xl leading-relaxed font-serif font-light text-[#121212]/80">
+                <p className="text-xs sm:text-base max-w-2xl leading-relaxed font-serif font-light text-[#121212]/80">
                   空间从来不仅是笛卡尔式的冷峻容器。在现象学、社会学与日常实践的凝视下，它是记忆庇护的角落、具身肉身的视界、权力规训的网络、漫步者游击书写的活化空间、抑或虚室生白的呼吸大用。
                 </p>
               </div>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col justify-between h-full border-t lg:border-t-0 lg:border-l border-[#121212] pt-6 lg:pt-0 lg:pl-8">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-xs font-mono uppercase tracking-widest pb-2 border-b border-[#121212]/30">
+            <div className="lg:col-span-4 flex flex-col justify-between h-full border-t lg:border-t-0 lg:border-l border-[#121212] pt-3 lg:pt-0 lg:pl-8">
+              <div className="grid grid-cols-3 lg:grid-cols-1 gap-2 sm:space-y-4">
+                <div className="flex flex-col lg:flex-row justify-between lg:items-center text-[10px] sm:text-xs font-mono uppercase tracking-wider sm:tracking-widest pb-1 lg:pb-2 border-b border-[#121212]/30">
                   <span className="text-[#121212]/60">CURATION</span>
                   <span className="font-bold text-[#121212]">10 THINKERS</span>
                 </div>
-                <div className="flex justify-between items-center text-xs font-mono uppercase tracking-widest pb-2 border-b border-[#121212]/30">
+                <div className="flex flex-col lg:flex-row justify-between lg:items-center text-[10px] sm:text-xs font-mono uppercase tracking-wider sm:tracking-widest pb-1 lg:pb-2 border-b border-[#121212]/30">
                   <span className="text-[#121212]/60">PARADIGMS</span>
                   <span className="font-bold text-[#121212]">05 SCHOOLS</span>
                 </div>
-                <div className="flex justify-between items-center text-xs font-mono uppercase tracking-widest pb-2 border-b border-[#121212]/30">
+                <div className="flex flex-col lg:flex-row justify-between lg:items-center text-[10px] sm:text-xs font-mono uppercase tracking-wider sm:tracking-widest pb-1 lg:pb-2 border-b border-[#121212]/30">
                   <span className="text-[#121212]/60">EDITION</span>
-                  <span className="font-bold text-[#121212]">VOL. XXIV — NO. 12</span>
+                  <span className="font-bold text-[#121212]">VOL. XXIV</span>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-[#121212]">
+              <div className="hidden lg:block mt-6 pt-4 border-t border-[#121212]">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-[#121212]/60">
                   A Visual Compendium of Spatial Interpretation & Phenomenology
                 </p>

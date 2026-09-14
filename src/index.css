@@ -47,3 +47,12 @@ body {
   background: #121212;
 }
 
+/* Hide scrollbar for mobile swipe carousels & tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

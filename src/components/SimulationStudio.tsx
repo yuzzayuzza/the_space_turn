@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Thinker } from '../types';
 import { THINKERS } from '../data/thinkers';
 import { BachelardNestSimulation } from './simulations/BachelardNestSimulation';
@@ -28,6 +28,16 @@ export const SimulationStudio: React.FC<SimulationStudioProps> = ({
 
   const prevThinker = THINKERS[(currentIndex - 1 + THINKERS.length) % THINKERS.length];
   const nextThinker = THINKERS[(currentIndex + 1) % THINKERS.length];
+  const navScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Smooth auto-scroll active thinker into view horizontally on mobile
+  useEffect(() => {
+    if (!navScrollRef.current) return;
+    const selectedBtn = navScrollRef.current.querySelector('[data-selected="true"]') as HTMLElement | null;
+    if (selectedBtn) {
+      selectedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activeThinkerId]);
 
   const renderActiveSimulation = () => {
     switch (currentThinker.id) {
@@ -57,46 +67,52 @@ export const SimulationStudio: React.FC<SimulationStudioProps> = ({
   };
 
   return (
-    <div className="space-y-8 text-[#121212]">
-      {/* Thinkers Editorial Selector Strip */}
-      <div className="bg-[#fdfcf8] p-3 border border-[#121212] flex items-center gap-2 overflow-x-auto shadow-sm">
-        <span className="text-[11px] font-mono uppercase tracking-widest text-[#121212]/50 whitespace-nowrap pl-2 pr-1">
-          INDEX:
-        </span>
-        {THINKERS.map(t => {
-          const isSelected = t.id === currentThinker.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => {
-                onSelectThinker(t.id);
-                audioAtmosphere.playChime(350);
-              }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-serif whitespace-nowrap transition-all cursor-pointer border border-[#121212] ${
-                isSelected
-                  ? 'bg-[#121212] text-[#fdfcf8] font-medium'
-                  : 'bg-[#fdfcf8] text-[#121212] hover:bg-[#121212] hover:text-[#fdfcf8]'
-              }`}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: isSelected ? '#fdfcf8' : t.accentColor }}
-              />
-              <span>{t.name}</span>
-            </button>
-          );
-        })}
+    <div className="space-y-2.5 sm:space-y-8 text-[#121212]">
+      {/* Thinkers Editorial Selector Strip - Sticky on mobile with minimized margins */}
+      <div className="sticky top-0 sm:static z-40 -mx-3 sm:mx-0 px-3 sm:px-0 py-1 sm:py-0 bg-[#fdfcf8]/95 backdrop-blur-md transition-all border-b border-[#121212]/20 sm:border-b-0 shadow-sm sm:shadow-none">
+        <div
+          ref={navScrollRef}
+          className="bg-[#fdfcf8] py-1 px-1.5 sm:p-3 border border-[#121212] flex items-center gap-1 sm:gap-2 overflow-x-auto shadow-sm no-scrollbar"
+        >
+          <span className="text-[9.5px] sm:text-[11px] font-mono uppercase tracking-widest text-[#121212]/50 whitespace-nowrap pl-1 sm:pl-2 pr-0.5">
+            INDEX:
+          </span>
+          {THINKERS.map(t => {
+            const isSelected = t.id === currentThinker.id;
+            return (
+              <button
+                key={t.id}
+                data-selected={isSelected}
+                onClick={() => {
+                  onSelectThinker(t.id);
+                  audioAtmosphere.playChime(350);
+                }}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-serif whitespace-nowrap transition-all cursor-pointer border border-[#121212] shrink-0 ${
+                  isSelected
+                    ? 'bg-[#121212] text-[#fdfcf8] font-medium'
+                    : 'bg-[#fdfcf8] text-[#121212] hover:bg-[#121212] hover:text-[#fdfcf8]'
+                }`}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: isSelected ? '#fdfcf8' : t.accentColor }}
+                />
+                <span>{t.name}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Main Simulation View Stage Framed in Editorial Ink Border */}
-      <div className="w-full h-[620px] overflow-hidden shadow-sm relative border border-[#121212] bg-[#121212]">
+      <div className="w-full h-[580px] sm:h-[660px] md:h-[700px] overflow-hidden shadow-sm relative border border-[#121212] bg-[#121212]">
         {renderActiveSimulation()}
       </div>
 
       {/* Editorial Dossier & Deep Hermeneutics Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         {/* Left Column: Essential Quote & Thesis (The Editorial Dossier) */}
-        <div className="lg:col-span-5 bg-[#fdfcf8] border border-[#121212] p-8 space-y-6 shadow-sm">
+        <div className="lg:col-span-5 bg-[#fdfcf8] border border-[#121212] p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-sm">
           <div className="flex items-center justify-between pb-3 border-b border-[#121212]/30">
             <span className="text-[11px] font-mono uppercase tracking-widest text-[#121212]/70">
               {currentThinker.paradigmName}
@@ -153,7 +169,7 @@ export const SimulationStudio: React.FC<SimulationStudioProps> = ({
         </div>
 
         {/* Right Column: Three-Point Deep Hermeneutics */}
-        <div className="lg:col-span-7 bg-[#fdfcf8] border border-[#121212] p-8 space-y-5 shadow-sm">
+        <div className="lg:col-span-7 bg-[#fdfcf8] border border-[#121212] p-5 sm:p-8 space-y-4 sm:space-y-5 shadow-sm">
           <div className="flex items-center justify-between pb-3 border-b border-[#121212]/30">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#121212]">
               <Lightbulb className="w-4 h-4" />

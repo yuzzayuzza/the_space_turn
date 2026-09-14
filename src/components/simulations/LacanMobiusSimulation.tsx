@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Infinity as InfinityIcon, Rotate3d, Sparkles, Sliders, RefreshCw } from 'lucide-react';
+import { Infinity as InfinityIcon, Rotate3d, Sparkles, Sliders, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { audioAtmosphere } from '../../utils/audioAtmosphere';
 
 export const LacanMobiusSimulation: React.FC = () => {
@@ -11,6 +11,7 @@ export const LacanMobiusSimulation: React.FC = () => {
   const [speed, setSpeed] = useState(1.0);
   const [particleU, setParticleU] = useState(0); // 0 to 4*PI
   const [currentDomain, setCurrentDomain] = useState<'interior' | 'exterior'>('interior');
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
 
   const isDraggingRef = useRef(false);
   const lastMouseRef = useRef({ x: 0, y: 0 });
@@ -32,8 +33,6 @@ export const LacanMobiusSimulation: React.FC = () => {
     resize();
     window.addEventListener('resize', resize);
 
-    const R = 150; // Radius of strip
-    const stripWidth = 46;
     const uSegments = 80;
     const vSegments = 4;
 
@@ -63,8 +62,14 @@ export const LacanMobiusSimulation: React.FC = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const w = canvas.width;
       const h = canvas.height;
+      const isMobile = w < 640;
       const cx = w * 0.5;
-      const cy = h * 0.5 - 20;
+      const cy = h * (isMobile ? 0.52 : 0.51);
+
+      // Dynamically scaled radius to prevent collision with edges or bottom epigraph
+      const maxDim = Math.min(w * (isMobile ? 0.29 : 0.35), h * (isMobile ? 0.22 : 0.27));
+      const R = Math.max(78, Math.min(136, maxDim));
+      const stripWidth = R * 0.27;
 
       uProgress += 0.012 * speed;
       if (uProgress > Math.PI * 4) {
@@ -164,7 +169,7 @@ export const LacanMobiusSimulation: React.FC = () => {
       // We flip v side if in second turn!
       const currentU = uProgress % (Math.PI * 2);
       const isSecondLoop = uProgress >= Math.PI * 2;
-      const currentV = isSecondLoop ? 18 : -18;
+      const currentV = (isSecondLoop ? 1 : -1) * (stripWidth * 0.4);
 
       const subX = (R + currentV * Math.cos(currentU / 2)) * Math.cos(currentU);
       const subY = (R + currentV * Math.cos(currentU / 2)) * Math.sin(currentU);
@@ -202,12 +207,12 @@ export const LacanMobiusSimulation: React.FC = () => {
     };
   }, [rotX, rotY, speed]);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     isDraggingRef.current = true;
     lastMouseRef.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
     const dx = e.clientX - lastMouseRef.current.x;
     const dy = e.clientY - lastMouseRef.current.y;
@@ -217,41 +222,39 @@ export const LacanMobiusSimulation: React.FC = () => {
     setRotX(prev => Math.max(-1.2, Math.min(1.2, prev + dy * 0.008)));
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = () => {
     isDraggingRef.current = false;
   };
 
   return (
     <div className="flex flex-col h-full bg-[#151417] text-[#ebe7e2] select-none relative overflow-hidden">
       {/* Top Editorial Bar */}
-      <div className="px-6 py-3.5 bg-[#1b191e] border-b border-[#343038] flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#c4b5fd] animate-pulse" />
-          <span className="font-serif font-medium tracking-wide text-[#eae5df]">
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3.5 bg-[#1b191e] border-b border-[#343038] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 text-xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-2 h-2 rounded-full bg-[#c4b5fd] animate-pulse shrink-0" />
+          <span className="font-serif font-medium tracking-wide text-[#eae5df] truncate text-xs">
             雅克·拉康：无意识拓扑 · 莫比乌斯环与外亲性 (Extimité)
           </span>
-          <span className="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#484252] text-[#c4b5fd] bg-[#26232c]">
-            PSYCHOANALYTIC TOPOLOGY
+          <span className="hidden sm:inline-block font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 border border-[#484252] text-[#c4b5fd] bg-[#26232c] shrink-0">
+            TOPOLOGY
           </span>
         </div>
 
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs">
           {/* Current Domain Indicator */}
-          <div className="flex items-center gap-2 px-3 py-1 bg-[#232029] border border-[#3b3644]">
-            <span className="text-[#a59eb0]">当前心理拓扑态:</span>
+          <div className="flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-[#232029] border border-[#3b3644] text-[11px] sm:text-xs">
+            <span className="text-[#a59eb0] hidden sm:inline">态:</span>
             <span
               className={`font-serif font-bold ${
                 currentDomain === 'interior' ? 'text-[#e9d5ff]' : 'text-[#fecdd3]'
               }`}
             >
-              {currentDomain === 'interior'
-                ? '【内在领域 · 私密欲望】'
-                : '【外亲领域 · 异己他者】'}
+              {currentDomain === 'interior' ? '内在欲望' : '外亲他者'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-[#b0a8bb]">
-            <span className="font-serif">滑行速率:</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[#b0a8bb]">
+            <span className="font-serif text-[11px] sm:text-xs">速率:</span>
             <input
               type="range"
               min="0.5"
@@ -259,7 +262,7 @@ export const LacanMobiusSimulation: React.FC = () => {
               step="0.1"
               value={speed}
               onChange={e => setSpeed(Number(e.target.value))}
-              className="w-16 accent-[#c4b5fd] cursor-pointer"
+              className="w-14 sm:w-16 accent-[#c4b5fd] cursor-pointer"
             />
           </div>
 
@@ -269,11 +272,11 @@ export const LacanMobiusSimulation: React.FC = () => {
               setRotY(0.4);
               audioAtmosphere.playChime(440);
             }}
-            className="flex items-center gap-1.5 text-[#c4b5fd] hover:text-[#f3e8ff] transition-colors cursor-pointer border border-[#3b3546] px-2.5 py-1 bg-[#232029]"
+            className="flex items-center gap-1 text-[#c4b5fd] hover:text-[#f3e8ff] transition-colors cursor-pointer border border-[#3b3546] px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#232029] text-[11px]"
             title="重置3D观察视角"
           >
             <RefreshCw className="w-3 h-3" />
-            <span className="font-mono text-[10px] uppercase">重置视角</span>
+            <span className="font-mono text-[10px] uppercase">重置</span>
           </button>
         </div>
       </div>
@@ -281,28 +284,41 @@ export const LacanMobiusSimulation: React.FC = () => {
       {/* Main Interactive Stage */}
       <div
         ref={containerRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        className="relative flex-1 w-full min-h-[460px] cursor-grab active:cursor-grabbing overflow-hidden select-none bg-[#131215]"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        className="relative flex-1 w-full min-h-[440px] sm:min-h-[460px] cursor-grab active:cursor-grabbing overflow-hidden select-none bg-[#131215] touch-none"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
 
         {/* Tip */}
-        <div className="absolute top-4 left-6 z-20 text-[11px] text-[#c4b5fd] bg-[#1d1b22]/90 px-3.5 py-1.5 border border-[#36313f] font-serif flex items-center gap-2">
-          <Rotate3d className="w-3.5 h-3.5" />
-          <span>按住鼠标拖拽：任意旋转莫比乌斯曲面的单侧空间拓扑</span>
+        <div className="absolute top-2.5 sm:top-4 left-2.5 sm:left-6 right-2.5 sm:right-auto z-20 text-[10px] sm:text-[11px] text-[#c4b5fd] bg-[#1d1b22]/90 px-2.5 sm:px-3.5 py-1 sm:py-1.5 border border-[#36313f] font-serif flex items-center gap-1.5 sm:gap-2">
+          <Rotate3d className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+          <span>滑动/拖拽：3D旋转观察莫比乌斯曲面的单侧连续空间</span>
         </div>
 
-        {/* Bottom Annotation */}
-        <div className="absolute bottom-4 left-6 right-6 z-30 pointer-events-none">
-          <div className="bg-[#19171d]/92 backdrop-blur-md p-4 border border-[#342f3d] shadow-xl max-w-2xl mx-auto text-center pointer-events-auto">
-            <p className="text-xs font-serif text-[#ebe7e2] leading-relaxed italic">
-              “主体的内部空间没有一堵分明的内墙。莫比乌斯环表明：沿着一条连续的单侧曲面滑行，你无需翻越任何边缘，便会发现那最私密、最核心的‘内’，恰恰是不可抵挡的绝对象征‘外’。”
-            </p>
-            <span className="block mt-1.5 font-mono text-[10px] text-[#c4b5fd]">
-              雅克·拉康《精神分析的拓扑学》
-            </span>
+        {/* Bottom Annotation with Mobile Collapse/Expand */}
+        <div className="absolute bottom-2 sm:bottom-4 left-2.5 sm:left-6 right-2.5 sm:right-6 z-30 pointer-events-none">
+          <div className="bg-[#19171d]/92 backdrop-blur-md px-3 py-2 sm:p-4 border border-[#342f3d] shadow-xl max-w-2xl mx-auto pointer-events-auto">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-[#c4b5fd] font-mono truncate">
+                雅克·拉康《精神分析的拓扑学》· 外亲性
+              </span>
+              <button
+                onClick={() => setIsQuoteExpanded(v => !v)}
+                className="text-[10px] font-mono text-[#c4b5fd] hover:text-[#f3e8ff] cursor-pointer flex items-center gap-1 shrink-0 px-1.5 py-0.5 border border-[#3b3546] bg-[#232029]"
+              >
+                <span>{isQuoteExpanded ? '收起' : '展开'}</span>
+                {isQuoteExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              </button>
+            </div>
+            {isQuoteExpanded && (
+              <div className="mt-2 pt-2 border-t border-[#342f3d] text-center">
+                <p className="text-xs font-serif text-[#ebe7e2] leading-relaxed italic">
+                  “主体的内部空间没有一堵分明的内墙。莫比乌斯环表明：沿着一条连续的单侧曲面滑行，你无需翻越任何边缘，便会发现那最私密、最核心的‘内’，恰恰是不可抵挡的绝对象征‘外’。”
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
